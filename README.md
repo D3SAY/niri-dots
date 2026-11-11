@@ -6,17 +6,17 @@
 
 ## Скриншоты
 
-### Рабочий стол и лаунчер
+| Рабочий стол и лаунчер | Настройки оформления | Экран блокировки |
+|---|---|---|
+| [![Рабочий стол niri с панелью и открытым лаунчером](docs/screenshots/launcher.png)](docs/screenshots/launcher.png) | [![Настройки оформления Minflair](docs/screenshots/settings.png)](docs/screenshots/settings.png) | [![Экран блокировки Minflair с тестовым профилем](docs/screenshots/lock-screen.png)](docs/screenshots/lock-screen.png) |
 
-[![Рабочий стол niri с панелью и открытым лаунчером](docs/screenshots/launcher.png)](docs/screenshots/launcher.png)
+| Island | Игровой режим |
+|---|---|
+| [![Панель Island](docs/screenshots/island.png)](docs/screenshots/island.png) | [![Игровая панель](docs/screenshots/gaming.png)](docs/screenshots/gaming.png) |
 
-### Настройки оформления
+**Видео:** [рабочий стол и виджеты](docs/videos/desktop.mp4) · [окна и обзор niri](docs/videos/window-management.mp4) · [быстрое управление](docs/videos/controls.mp4) · [настройки и пакеты](docs/videos/settings-tour.mp4) · [Convex, Island и Gaming](docs/videos/styles.mp4) · [плеер и блокировка](docs/videos/music-and-lock.mp4).
 
-[![Настройки оформления Minflair](docs/screenshots/settings.png)](docs/screenshots/settings.png)
-
-### Экран блокировки
-
-[![Экран блокировки Minflair с тестовым профилем](docs/screenshots/lock-screen.png)](docs/screenshots/lock-screen.png)
+[Все функции, скриншоты и записи →](docs/features.md)
 
 ## Быстрый старт
 
@@ -46,7 +46,7 @@ mkdir -p ~/Pictures/Wallpapers
 
 Отключить конфиги можно из той же папки командой `stow --target="$HOME" --no-folding -D niri quickshell hypr ghostty`. Пользовательские настройки, созданные самим Minflair, сохраняются отдельно.
 
-## Горячие клавиши
+## Возможности и горячие клавиши
 
 | Клавиши | Действие |
 |---|---|
@@ -55,14 +55,26 @@ mkdir -p ~/Pictures/Wallpapers
 | **Super+,** | Настройки |
 | **Super+Enter** | Ghostty |
 | **Super+V** | История буфера обмена |
-| **Ctrl+Alt+S / A / N / O** | Центр управления / дашборд / уведомления / заметки |
+| **Ctrl+Alt+S** | Центр управления: звук, микрофон, яркость, сеть, Bluetooth и быстрые переключатели |
+| **Ctrl+Alt+A** | Дашборд: игры Steam и обновления системы |
+| **Ctrl+Alt+N** | История уведомлений |
+| **Ctrl+Alt+O** | Заметки: несколько записей, закрепление, Markdown |
 | **Ctrl+Alt+M** | Музыкальная панель, кнопка «Текст» раскрывает слова песни |
 | **Ctrl+Alt+W** | Выбор обоев |
+| **Ctrl+Alt+P** | Поиск и управление пакетами |
+| **Ctrl+Alt+V** | Список VPN-профилей |
 | **Print** | Меню захвата экрана |
-| **Super+M** | Telegram, если установлен |
+| **Super+Shift+T** | OCR через NormCap, если установлен |
+| **Super+E / M / D / B / S / G** | Loaf / Telegram / Vesktop / Zen / Spotify / Steam, если установлены |
 | **Super+I** | Блокировка экрана |
 | **Super+Shift+I** | Сон |
 | **Super+Shift+Q** | Меню питания |
+| **Super+Tab / Q** | Обзор / закрыть окно |
+| **Super+1–9 / Super+Ctrl+1–9** | Перейти на рабочий стол / переместить колонку |
+| **Super+стрелки / Super+Ctrl+стрелки** | Переместить фокус / переместить окно или колонку |
+| **Super+Space / X / T** | Сменить раскладку / вкладки в колонке / плавающее окно |
+
+**Convex** — стандартная панель с рамкой и раскрывающимися блоками. **Island** — компактные островки, которые раскрываются в зависимости от выбранного виджета. Стиль выбирается в **Настройки → Панель**. **Gaming** включается через «Игровой режим» в центре управления и показывает элементы поверх рабочего стола по запросу.
 
 Автозапуск находится в **Настройки → Управление → Автозапуск**. Изменения применяются при следующем входе. Аватар выбирается в **Настройки → О системе → Сменить аватар** и сохраняется в `~/.face`.
 
