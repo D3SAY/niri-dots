@@ -17,8 +17,14 @@ Rectangle {
     property int customHeight: compact ? 22 : SettingsService.barWidgetHeight
     readonly property real sideMargin: compact ? 6 : (hasBackground ? Constants.sizeXs : 0)
     readonly property real itemSpacing: compact ? 4 : (hasBackground ? Constants.sizeSm : Constants.size3Xs)
-    readonly property bool shouldShow: !forceHide && trayRow.implicitWidth > 0
-    readonly property real targetWidth: Math.min(trayRow.implicitWidth + sideMargin * 2, Layout.maximumWidth)
+    readonly property int visibleItemCount: {
+        const model = trayItems.model;
+        const items = model && typeof model.values !== "function" ? model.values : model;
+        return Array.from(items || []).filter(item => !SettingsService.isTrayItemHidden(item)).length;
+    }
+    readonly property real itemsWidth: visibleItemCount * customHeight + Math.max(0, visibleItemCount - 1) * itemSpacing
+    readonly property bool shouldShow: !forceHide && visibleItemCount > 0
+    readonly property real targetWidth: Math.min(itemsWidth + sideMargin * 2, Layout.maximumWidth)
 
     implicitHeight: customHeight
     implicitWidth: shouldShow ? targetWidth : 0
@@ -40,8 +46,9 @@ Rectangle {
         anchors.fill: parent
         anchors.leftMargin: root.sideMargin
         anchors.rightMargin: root.sideMargin
-        contentWidth: trayRow.implicitWidth
+        contentWidth: root.itemsWidth
         contentHeight: height
+        onContentWidthChanged: contentX = Math.max(0, Math.min(contentX, contentWidth - width))
         boundsBehavior: Flickable.StopAtBounds
         flickableDirection: Flickable.HorizontalFlick
         interactive: false
@@ -62,11 +69,14 @@ Rectangle {
             spacing: root.itemSpacing
 
             Repeater {
+                id: trayItems
+
                 model: SystemTray.items
 
                 delegate: STray.TrayItem {
                     trayItem: modelData
                     itemIndex: index
+                    visible: !SettingsService.isTrayItemHidden(trayItem)
                     customHeight: root.customHeight
                     iconSize: root.compact ? (Constants.sizeSm - 1) : Constants.sizeSm
                     onClicked: (mouse) => {

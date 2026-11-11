@@ -333,6 +333,7 @@ Item {
 
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                trayItem: root.isTray ? root.activeTrayItem : null
                 menuHandle: (root.isTray && root.activeTrayItem) ? root.activeTrayItem.menu : null
                 title: root.activeTrayTitle
                 onBackRequested: {

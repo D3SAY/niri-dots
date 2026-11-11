@@ -28,6 +28,34 @@ Item {
     property string islandRightMode: "auto"
     readonly property int barWidgetHeight: 28
     property int numberOfWorkspaces: 10
+    property var hiddenTrayItems: []
+
+    function trayItemId(item) {
+        return item && item.id ? item.id.trim().replace(/_status_icon_\d+$/i, "") : "";
+    }
+
+    function isTrayItemHidden(item) {
+        const id = trayItemId(item);
+        return hiddenTrayItems.some(entry => entry.id === id);
+    }
+
+    function hideTrayItem(item) {
+        const id = trayItemId(item);
+        if (!settingsLoaded || id === "" || isTrayItemHidden(item))
+            return;
+
+        const name = (item.title || "").trim() || (item.tooltipTitle || "").trim() || id;
+        hiddenTrayItems = hiddenTrayItems.concat([{ id: id, name: name }]);
+        saveSettings();
+    }
+
+    function restoreTrayItem(id) {
+        if (!settingsLoaded)
+            return;
+
+        hiddenTrayItems = hiddenTrayItems.filter(entry => entry.id !== id);
+        saveSettings();
+    }
 
     function saveSettings() {
         saveTimer.restart();
@@ -181,7 +209,8 @@ Item {
                 "cursorSize": settingsService.cursorSize,
                 "barStyle": settingsService.barStyle,
                 "islandRightMode": settingsService.islandRightMode,
-                "numberOfWorkspaces": settingsService.numberOfWorkspaces
+                "numberOfWorkspaces": settingsService.numberOfWorkspaces,
+                "hiddenTrayItems": settingsService.hiddenTrayItems
             };
             settingsSaver.running = false;
             settingsSaver.command = ["sh", "-c",
@@ -319,6 +348,9 @@ Item {
 
                         if (prefs.numberOfWorkspaces !== undefined)
                             settingsService.numberOfWorkspaces = prefs.numberOfWorkspaces;
+
+                        if (Array.isArray(prefs.hiddenTrayItems))
+                            settingsService.hiddenTrayItems = prefs.hiddenTrayItems.filter(entry => entry && typeof entry.id === "string" && entry.id !== "" && typeof entry.name === "string");
 
                     } catch (e) {
                         console.error("Error loading settings: " + e);

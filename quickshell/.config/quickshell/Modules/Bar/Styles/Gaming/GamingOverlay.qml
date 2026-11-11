@@ -347,6 +347,7 @@ PanelWindow {
 
             anchors.fill: parent
             anchors.margins: 8
+            trayItem: root.isTray ? root.activeTrayItem : null
             menuHandle: (root.isTray && root.activeTrayItem) ? root.activeTrayItem.menu : null
             title: root.activeTrayTitle
             onBackRequested: {

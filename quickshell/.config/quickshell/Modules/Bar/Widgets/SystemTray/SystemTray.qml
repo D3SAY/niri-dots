@@ -90,6 +90,7 @@ Item {
 
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                trayItem: root.isOpen ? root.currentTrayItem : null
                 menuHandle: root.currentTrayItem ? root.currentTrayItem.menu : null
                 title: {
                     let item = root.currentTrayItem;

@@ -161,17 +161,16 @@ FocusScope {
         return new Date(ms).toLocaleDateString(Constants.locale, "d MMM");
     }
 
-    implicitWidth: 440
-    implicitHeight: 560
-    Keys.onPressed: (event) => {
-        let ctrl = event.modifiers & Qt.ControlModifier;
-        let alt = event.modifiers & Qt.AltModifier;
+    function handleKey(event) {
+        const ctrl = event.modifiers === Qt.ControlModifier;
+        const alt = event.modifiers === Qt.AltModifier;
         if (event.key === Qt.Key_Escape) {
             root.closeRequested();
         } else if (ctrl && event.key === Qt.Key_N) {
             root.createNote();
         } else if (ctrl && event.key === Qt.Key_D) {
-            root.deleteNote();
+            if (!event.isAutoRepeat)
+                root.deleteNote();
         } else if (ctrl && event.key === Qt.Key_P) {
             root.togglePin();
         } else if (ctrl && event.key === Qt.Key_E) {
@@ -186,6 +185,10 @@ FocusScope {
         }
         event.accepted = true;
     }
+
+    implicitWidth: 440
+    implicitHeight: 560
+    Keys.onPressed: (event) => root.handleKey(event)
 
     FileView {
         id: store
@@ -378,6 +381,8 @@ FocusScope {
                     TextArea {
                         id: editor
 
+                        Keys.priority: Keys.BeforeItem
+                        Keys.onPressed: (event) => root.handleKey(event)
                         wrapMode: TextEdit.Wrap
                         font.family: root.monoFont
                         font.pixelSize: Math.round(Constants.sizeMd * SettingsService.fontScale)
@@ -408,6 +413,8 @@ FocusScope {
                     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
                     TextEdit {
+                        Keys.priority: Keys.BeforeItem
+                        Keys.onPressed: (event) => root.handleKey(event)
                         width: page.width
                         readOnly: true
                         selectByMouse: true

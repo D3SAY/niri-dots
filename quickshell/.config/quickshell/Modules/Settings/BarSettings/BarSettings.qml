@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import qs.Core
@@ -9,6 +10,51 @@ import qs.Modules.Settings.Components
 
 AppContainer {
     id: barSettingsRoot
+
+    AppGroup {
+        title: "Скрытые значки трея"
+        icon: "eye-off"
+
+        ThemedText {
+            Layout.fillWidth: true
+            visible: SettingsService.hiddenTrayItems.length === 0
+            text: "Скрытых значков нет"
+            color: Theme.muted
+        }
+
+        Repeater {
+            model: SettingsService.hiddenTrayItems
+
+            RowLayout {
+                id: hiddenRow
+
+                required property var modelData
+
+                Layout.fillWidth: true
+                spacing: Constants.sizeSm
+
+                ThemedText {
+                    Layout.fillWidth: true
+                    text: hiddenRow.modelData.name
+                    textFormat: Text.PlainText
+                    elide: Text.ElideRight
+                }
+
+                SvgIconButton {
+                    icon: "eye"
+                    iconSize: Constants.sizeSm
+                    iconColor: Theme.accent
+                    textIcon: "Вернуть"
+                    textIconSize: 12
+                    useCustomWidth: true
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.LeftButton)
+                            SettingsService.restoreTrayItem(hiddenRow.modelData.id);
+                    }
+                }
+            }
+        }
+    }
 
     AppGroup {
         title: "Стиль панели"

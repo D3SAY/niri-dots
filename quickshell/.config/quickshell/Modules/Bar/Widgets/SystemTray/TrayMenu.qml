@@ -5,14 +5,16 @@ import Quickshell
 import Quickshell.Widgets
 import qs.Core
 import qs.Core.Components
+import qs.Core.Services
 
 ColumnLayout {
-    id: menuRoot
+    id: trayMenuRoot
 
     property var menuHandle: null
+    property var trayItem: null
     property var menuStack: []
     property string title: "Меню"
-    property var activeChildren: menuRoot.menuStack.length > 1 ? subOpener.children : rootOpener.children
+    property var activeChildren: trayMenuRoot.menuStack.length > 1 ? subOpener.children : rootOpener.children
     property int prevStackLength: 1
     property real contentSlideX: 0
     property real contentOpacity: 1
@@ -22,13 +24,13 @@ ColumnLayout {
 
     function resetToRoot() {
         if (menuHandle)
-            menuRoot.menuStack = [menuHandle];
+            trayMenuRoot.menuStack = [menuHandle];
         else
-            menuRoot.menuStack = [];
+            trayMenuRoot.menuStack = [];
     }
 
     function isRedundantSeparator(idx) {
-        let children = menuRoot.activeChildren;
+        let children = trayMenuRoot.activeChildren;
         if (!children)
             return false;
 
@@ -71,9 +73,9 @@ ColumnLayout {
     spacing: Constants.sizeXs
     onMenuHandleChanged: {
         if (menuHandle)
-            menuRoot.menuStack = [menuHandle];
+            trayMenuRoot.menuStack = [menuHandle];
         else
-            menuRoot.menuStack = [];
+            trayMenuRoot.menuStack = [];
     }
     onMenuStackChanged: {
         let newLen = menuStack.length;
@@ -100,7 +102,7 @@ ColumnLayout {
         id: slideInAnim
 
         NumberAnimation {
-            target: menuRoot
+            target: trayMenuRoot
             property: "contentSlideX"
             to: 0
             duration: Constants.animNormal
@@ -108,7 +110,7 @@ ColumnLayout {
         }
 
         NumberAnimation {
-            target: menuRoot
+            target: trayMenuRoot
             property: "contentOpacity"
             to: 1
             duration: Constants.animNormal
@@ -120,13 +122,13 @@ ColumnLayout {
     QsMenuOpener {
         id: rootOpener
 
-        menu: menuRoot.menuHandle
+        menu: trayMenuRoot.menuHandle
     }
 
     QsMenuOpener {
         id: subOpener
 
-        menu: menuRoot.menuStack.length > 1 ? menuRoot.menuStack[menuRoot.menuStack.length - 1] : null
+        menu: trayMenuRoot.menuStack.length > 1 ? trayMenuRoot.menuStack[trayMenuRoot.menuStack.length - 1] : null
     }
 
     RowLayout {
@@ -142,7 +144,7 @@ ColumnLayout {
             iconColor: backHover.hovered ? Theme.accent : Theme.muted
             iconSize: Constants.sizeLg
             flat: true
-            visible: menuRoot.menuStack.length > 1
+            visible: trayMenuRoot.menuStack.length > 1
             scale: backHover.hovered ? 1.15 : 1
 
             HoverHandler {
@@ -153,9 +155,9 @@ ColumnLayout {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    let s = menuRoot.menuStack.slice();
+                    let s = trayMenuRoot.menuStack.slice();
                     s.pop();
-                    menuRoot.menuStack = s;
+                    trayMenuRoot.menuStack = s;
                 }
             }
 
@@ -177,7 +179,7 @@ ColumnLayout {
         }
 
         ThemedText {
-            text: menuRoot.menuStack.length > 1 ? (menuRoot.menuStack[menuRoot.menuStack.length - 1].text || "Назад") : menuRoot.title
+            text: trayMenuRoot.menuStack.length > 1 ? (trayMenuRoot.menuStack[trayMenuRoot.menuStack.length - 1].text || "Назад") : trayMenuRoot.title
             customSize: Constants.sizeLg
             font.bold: true
             Layout.fillWidth: true
@@ -187,6 +189,23 @@ ColumnLayout {
     }
 
     Divider {
+    }
+
+    SvgIconButton {
+        Layout.fillWidth: true
+        visible: SettingsService.settingsLoaded && SettingsService.trayItemId(trayMenuRoot.trayItem) !== "" && trayMenuRoot.menuStack.length <= 1
+        icon: "eye-off"
+        iconSize: Constants.sizeSm
+        iconColor: Theme.accent
+        textIcon: "Скрыть из трея"
+        textIconSize: 12
+        contentAlignment: Qt.AlignLeft
+        onClicked: mouse => {
+            if (mouse.button !== Qt.LeftButton)
+                return;
+            SettingsService.hideTrayItem(trayMenuRoot.trayItem);
+            trayMenuRoot.closeRequested();
+        }
     }
 
     ScrollView {
@@ -206,19 +225,19 @@ ColumnLayout {
 
             width: parent.width
             spacing: Constants.sizeXs
-            opacity: menuRoot.contentOpacity
+            opacity: trayMenuRoot.contentOpacity
 
             Repeater {
-                model: menuRoot.activeChildren
+                model: trayMenuRoot.activeChildren
 
                 delegate: TrayMenuItemDelegate {
-                    menuRoot: menuRoot
+                    menuRoot: trayMenuRoot
                 }
 
             }
 
             transform: Translate {
-                x: menuRoot.contentSlideX
+                x: trayMenuRoot.contentSlideX
             }
 
         }

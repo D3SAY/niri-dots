@@ -15,23 +15,28 @@ Rectangle {
     readonly property int activeLine: lyrics.activeLine
 
     function followLine(animate = true) {
+        const line = lyricRows.itemAt(activeLine);
+        lineHighlight.animateMovement = animate && lineHighlight.row !== null && line !== null;
+        lineHighlight.row = line;
         if (lyricsList.dragging || lyricsList.flicking)
             return;
-        const line = lyricRows.itemAt(activeLine);
         const maxY = Math.max(0, lyricsList.contentHeight - lyricsList.height);
         const centeredY = line ? line.y + (line.height - lyricsList.height) / 2 : 0;
         const targetY = Math.max(0, Math.min(maxY, centeredY));
-        scrollAnimation.stop();
+        scrollFollow.stop();
         if (animate && Constants.animFast > 0) {
             scrollAnimation.to = targetY;
-            scrollAnimation.start();
+            if (Math.abs(targetY - lyricsList.contentY) > 0.5)
+                scrollFollow.start();
         } else {
             lyricsList.contentY = targetY;
         }
     }
 
     onLinesChanged: {
-        scrollAnimation.stop();
+        lineHighlight.animateMovement = false;
+        lineHighlight.row = null;
+        scrollFollow.stop();
         lyricsList.contentY = 0;
         Qt.callLater(followLine, false);
     }
@@ -102,15 +107,50 @@ Rectangle {
                 contentHeight: lyricColumn.height
                 flickableDirection: Flickable.VerticalFlick
                 boundsBehavior: Flickable.StopAtBounds
-                onMovementStarted: scrollAnimation.stop()
+                onMovementStarted: scrollFollow.stop()
                 ScrollIndicator.vertical: ScrollIndicator {}
 
-                NumberAnimation {
-                    id: scrollAnimation
-                    target: lyricsList
-                    property: "contentY"
-                    duration: Constants.animFast
-                    easing.type: Easing.OutCubic
+                SequentialAnimation {
+                    id: scrollFollow
+                    // Let the highlight move visibly before recentering the viewport.
+                    PauseAnimation { duration: Math.round(Constants.animFast / 2) }
+                    NumberAnimation {
+                        id: scrollAnimation
+                        target: lyricsList
+                        property: "contentY"
+                        duration: Constants.animFast
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                Rectangle {
+                    id: lineHighlight
+
+                    property Item row: null
+                    property bool animateMovement: false
+
+                    visible: row !== null
+                    width: lyricColumn.width
+                    y: row ? row.y : 0
+                    height: row ? row.height : 0
+                    radius: Constants.sizeSm
+                    color: Theme.bgAccent
+
+                    Behavior on y {
+                        enabled: lineHighlight.animateMovement
+                        NumberAnimation {
+                            duration: Constants.animFast
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Behavior on height {
+                        enabled: lineHighlight.animateMovement
+                        NumberAnimation {
+                            duration: Constants.animFast
+                            easing.type: Easing.OutCubic
+                        }
+                    }
                 }
 
                 Column {
@@ -121,20 +161,12 @@ Rectangle {
                         id: lyricRows
                         model: root.lines
 
-                        delegate: Rectangle {
+                        delegate: Item {
                             required property int index
                             required property var modelData
                             readonly property bool highlighted: index === root.activeLine
                             width: lyricColumn.width
                             height: lineText.implicitHeight + 14
-                            radius: Constants.sizeSm
-                            color: highlighted ? Theme.bgAccent : "transparent"
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: Constants.animFast
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
 
                             ThemedText {
                                 id: lineText
