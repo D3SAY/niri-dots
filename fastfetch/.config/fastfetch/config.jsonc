@@ -6,23 +6,37 @@
     "color": { "1": "0" }
   },
   "display": {
-    "separator": " ",
+    "separator": ": ",
     "key": { "color": "37" }
   },
   "modules": [
     "break",
-    { "type": "os",           "key": " " },
-    { "type": "kernel",       "key": " " },
-    { "type": "packages",     "key": " " },
-    { "type": "shell",        "key": " " },
-    { "type": "terminal",     "key": " " },
-    { "type": "wm",           "key": " " },
-    { "type": "cursor",       "key": " " },
-    { "type": "terminalfont", "key": " " },
-    { "type": "uptime",       "key": " " },
-    { "type": "datetime",     "key": " ", "format": "{1}-{3}-{11}" },
-    { "type": "memory",       "key": "󰍛 " },
-    { "type": "media",        "key": " " },
-    { "type": "monitor",      "key": " " }
+    { "type": "os",       "key": "  ОС" },
+    { "type": "kernel",   "key": "  Ядро" },
+    { "type": "packages", "key": "  Пакеты" },
+    { "type": "shell",    "key": "  Оболочка" },
+    { "type": "terminal", "key": "  Терминал" },
+    { "type": "wm",       "key": "  Композитор" },
+    {
+      "type": "command",
+      "key": "󰃭  Возраст Arch",
+      "text": "stamp=$(awk '/\\[ALPM\\] installed base \\(/ { print substr($1, 2, length($1) - 2); exit }' /var/log/pacman.log 2>/dev/null); installed=$(date -d \"${stamp:-invalid}\" +%s 2>/dev/null) || installed=$(stat -c %W /etc 2>/dev/null); now=$(date +%s); if [ \"${installed:-0}\" -gt 0 ] && [ \"$installed\" -le \"$now\" ]; then printf '%s дн.\\n' \"$(( (now - installed) / 86400 ))\"; fi"
+    },
+    {
+      "type": "uptime",
+      "key": "  Время работы",
+      "format": "{?days}{days} дн. {?}{?hours}{hours} ч {?}{minutes} мин"
+    },
+    { "type": "datetime", "key": "  Дата", "format": "{day-pretty}.{month-pretty}.{year}" },
+    {
+      "type": "command",
+      "key": "󰍛  ОЗУ",
+      "text": "LC_ALL=C awk '/^MemTotal:/ { total=$2 } /^MemAvailable:/ { available=$2; found=1 } END { if (total > 0 && found) { used=total-available; text=sprintf(\"%.2f / %.2f ГиБ (%.0f%%)\", used/1048576, total/1048576, 100*used/total); gsub(/[.]/, \",\", text); print text } }' /proc/meminfo"
+    },
+    {
+      "type": "monitor",
+      "key": "  Монитор",
+      "format": "{width}×{height} пикс.{?refresh-rate} · {refresh-rate} Гц{?}{?physical-width} · {physical-width}×{physical-height} мм{?}{?inch} ({inch}″){?}"
+    }
   ]
 }
