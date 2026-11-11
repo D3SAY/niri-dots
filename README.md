@@ -14,7 +14,13 @@
 |---|---|
 | [![Панель Island](docs/screenshots/island.png)](docs/screenshots/island.png) | [![Игровая панель](docs/screenshots/gaming.png)](docs/screenshots/gaming.png) |
 
-**Видео:** [рабочий стол и виджеты](docs/videos/desktop.mp4) · [окна и обзор niri](docs/videos/window-management.mp4) · [быстрое управление](docs/videos/controls.mp4) · [настройки и пакеты](docs/videos/settings-tour.mp4) · [Convex, Island и Gaming](docs/videos/styles.mp4) · [плеер и блокировка](docs/videos/music-and-lock.mp4).
+**Видеообзор райса · 2 минуты**
+
+[![Кадр из видеообзора niri и Minflair](docs/screenshots/video-preview.jpg)](docs/videos/rice-demo.mp4)
+
+[Открыть видеообзор (MP4, 1440p)](docs/videos/rice-demo.mp4)
+
+**Короткие записи по функциям:** [рабочий стол и виджеты](docs/videos/desktop.mp4) · [окна и обзор niri](docs/videos/window-management.mp4) · [быстрое управление](docs/videos/controls.mp4) · [настройки и пакеты](docs/videos/settings-tour.mp4) · [Convex, Island и Gaming](docs/videos/styles.mp4) · [плеер и блокировка](docs/videos/music-and-lock.mp4).
 
 [Все функции, скриншоты и записи →](docs/features.md)
 
