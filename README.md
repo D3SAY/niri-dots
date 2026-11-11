@@ -6,9 +6,17 @@
 
 ## Скриншоты
 
-| Рабочий стол и лаунчер | Настройки оформления | Экран блокировки |
-|---|---|---|
-| [![Рабочий стол niri с панелью и открытым лаунчером](docs/screenshots/launcher.png)](docs/screenshots/launcher.png) | [![Настройки оформления Minflair](docs/screenshots/settings.png)](docs/screenshots/settings.png) | [![Экран блокировки Minflair с тестовым профилем](docs/screenshots/lock-screen.png)](docs/screenshots/lock-screen.png) |
+### Рабочий стол и лаунчер
+
+[![Рабочий стол niri с панелью и открытым лаунчером](docs/screenshots/launcher.png)](docs/screenshots/launcher.png)
+
+### Настройки оформления
+
+[![Настройки оформления Minflair](docs/screenshots/settings.png)](docs/screenshots/settings.png)
+
+### Экран блокировки
+
+[![Экран блокировки Minflair с тестовым профилем](docs/screenshots/lock-screen.png)](docs/screenshots/lock-screen.png)
 
 ## Быстрый старт
 
