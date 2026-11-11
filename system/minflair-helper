@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# Root helper for the desktop's zapret and VPN buttons, installed by system/install.sh to
+# /usr/local/lib/minflair/minflair-helper. The desktop calls it via pkexec with standard
+# polkit authentication. It supports the following operations:
+#   minflair-helper zapret on|off
+#   minflair-helper vpn up <name>     connect ~/.config/awg/<name>.conf, dropping any other config
+#   minflair-helper vpn down          disconnect every config from ~/.config/awg
+# The VPN configs live in the user's home, so the PreUp/PostUp/PreDown/PostDown lines (commands
+# awg-quick would run as root) are stripped from a root-owned copy before it's used.
+set -euo pipefail
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin
+
+uid=${PKEXEC_UID:-${SUDO_UID:-}}
+[[ -n $uid ]] || { echo "run through pkexec" >&2; exit 1; }
+home=$(getent passwd "$uid" | cut -d: -f6)
+src=$home/.config/awg
+run=/run/minflair-vpn
+
+valid() {
+    [[ $1 =~ ^[a-zA-Z0-9_=+.-]{1,15}$ ]]
+}
+
+# a root-owned copy of the user's config without the hook commands
+prepare() {
+    install -d -m700 "$run"
+    grep -viE '^[[:space:]]*(pre|post)(up|down)[[:space:]]*=' "$src/$1.conf" >"$run/$1.conf.new" || true
+    chmod 600 "$run/$1.conf.new"
+    mv "$run/$1.conf.new" "$run/$1.conf"
+}
+
+configs() {
+    for f in "$src"/*.conf; do
+        [[ -f $f ]] || continue
+        n=$(basename "$f" .conf)
+        valid "$n" && echo "$n"
+    done
+}
+
+case ${1:-} in
+zapret)
+    case ${2:-} in
+    on) systemctl enable --now zapret2 ;;
+    off) systemctl disable --now zapret2 ;;
+    *) exit 2 ;;
+    esac
+    ;;
+vpn)
+    name=""
+    if [[ ${2:-} == up ]]; then
+        name=${3:-}
+        valid "$name" && [[ -f $src/$name.conf ]] || { echo "no config $name" >&2; exit 1; }
+    elif [[ ${2:-} != down ]]; then
+        exit 2
+    fi
+    for n in $(configs); do
+        if [[ -d /sys/class/net/$n && $n != "$name" ]]; then
+            prepare "$n"
+            awg-quick down "$run/$n.conf"
+        fi
+    done
+    if [[ -n $name && ! -d /sys/class/net/$name ]]; then
+        prepare "$name"
+        awg-quick up "$run/$name.conf"
+    fi
+    ;;
+*)
+    echo "usage: minflair-helper zapret on|off | vpn up <name> | vpn down" >&2
+    exit 2
+    ;;
+esac

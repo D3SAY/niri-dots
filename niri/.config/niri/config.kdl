@@ -1,0 +1,337 @@
+// niri config — https://yalter.github.io/niri/Configuration:-Introduction
+// Check after editing: niri validate
+
+
+// ─── Environment ─────────────────────────────────────────────────────────────
+
+environment {
+    ELECTRON_OZONE_PLATFORM_HINT "auto"
+    // Qt apps take the wallpaper palette written by Quickshell's theme service
+    QT_QPA_PLATFORMTHEME "qt6ct"
+    QT_WAYLAND_DECORATION "adwaita"
+    // no qt6ct.conf, so Qt (and Quickshell's notification/tray icons) would only see hicolor
+    QS_ICON_THEME "Papirus-Dark"
+    XCURSOR_THEME "Bibata-Modern-Classic"
+    XCURSOR_SIZE "20"
+}
+
+prefer-no-csd
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+
+// ─── Outputs ─────────────────────────────────────────────────────────────────
+// Names and modes: niri msg outputs
+
+include optional=true "outputs.local.kdl"
+
+
+// ─── Input ───────────────────────────────────────────────────────────────────
+
+input {
+    keyboard {
+        xkb {
+            layout "us,ru"
+        }
+        repeat-delay 300
+        repeat-rate 50
+    }
+    // Mod+N on the workspace you're already on goes back to the one you came from
+    workspace-auto-back-and-forth
+    // mouse, touchpad and focus-follows-mouse: Quickshell Settings -> minflair.kdl
+}
+
+
+// ─── Layout ──────────────────────────────────────────────────────────────────
+
+// gaps, border, shadow: Quickshell Settings -> minflair.kdl; colors: colors.kdl
+layout {
+    background-color "transparent"
+
+    center-focused-column "on-overflow"
+    always-center-single-column
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+    default-column-width { proportion 0.5; }
+
+    focus-ring { off; }
+
+    tab-indicator {
+        gap 3
+    }
+}
+
+overview {
+    zoom 0.3
+    workspace-shadow { off; }
+}
+
+
+// ─── Animations ──────────────────────────────────────────────────────────────
+
+animations {
+    workspace-switch {
+        spring damping-ratio=0.80 stiffness=523 epsilon=0.0001
+    }
+    window-open {
+        duration-ms 250
+        curve "ease-out-expo"
+    }
+    window-close {
+        duration-ms 250
+        curve "ease-out-quad"
+    }
+    horizontal-view-movement {
+        spring damping-ratio=0.85 stiffness=423 epsilon=0.0001
+    }
+    window-movement {
+        spring damping-ratio=0.75 stiffness=323 epsilon=0.0001
+    }
+    window-resize {
+        spring damping-ratio=0.85 stiffness=423 epsilon=0.0001
+    }
+    config-notification-open-close {
+        spring damping-ratio=0.65 stiffness=923 epsilon=0.001
+    }
+    screenshot-ui-open {
+        duration-ms 200
+        curve "ease-out-quad"
+    }
+    overview-open-close {
+        spring damping-ratio=0.85 stiffness=550 epsilon=0.0001
+    }
+}
+
+
+// ─── Window rules ────────────────────────────────────────────────────────────
+
+// Rounded corners, opacity: Quickshell Settings -> minflair.kdl
+
+// Quickshell apps (Settings, keybinds cheat sheet, package manager) open centered and floating
+window-rule {
+    match title="^Minflair Settings$"
+    open-floating true
+    default-column-width { fixed 1200; }
+    default-window-height { fixed 750; }
+}
+
+window-rule {
+    match title="^Minflair Keybinds Cheat Sheet$"
+    open-floating true
+    default-column-width { fixed 1100; }
+    default-window-height { fixed 700; }
+}
+
+window-rule {
+    match title="^Minflair Package Manager$"
+    open-floating true
+    default-column-width { fixed 1300; }
+    default-window-height { fixed 800; }
+}
+
+// Terminals the package manager opens for yay
+window-rule {
+    match app-id="^com\\.minflair\\.floating$"
+    open-floating true
+    default-column-width { fixed 1000; }
+    default-window-height { fixed 600; }
+}
+
+// Small dialogs from the control center
+window-rule {
+    match app-id="^org\\.pulseaudio\\.pavucontrol$"
+    match app-id="^nm-connection-editor$"
+    open-floating true
+}
+
+// Browser picture-in-picture opens floating
+window-rule {
+    match title="^Picture[- ]in[- ][Pp]icture$"
+    open-floating true
+}
+
+// Steam notifications go to the bottom-right corner
+window-rule {
+    match app-id="steam" title=r#"^notificationtoasts_\d+_desktop$"#
+    default-floating-position x=10 y=10 relative-to="bottom-right"
+}
+
+
+// ─── Layer rules ─────────────────────────────────────────────────────────────
+
+// Keep the wallpaper visible in the overview
+layer-rule {
+    match namespace="^awww-daemon$"
+    place-within-backdrop true
+}
+
+
+// ─── Autostart ───────────────────────────────────────────────────────────────
+// niri starts xwayland-satellite itself; gnome-keyring is started by systemd.
+
+// Quickshell (minflair): bar, frame, notifications, launcher, clipboard, lock screen, settings.
+// Restart it after any exit while this niri session is alive.
+spawn-sh-at-startup "while [ -S \"$NIRI_SOCKET\" ]; do qs; sleep 1; done"
+// autologin at boot: lock right away, the password goes into the lock screen (see the script)
+spawn-at-startup "~/.config/niri/scripts/lock-on-autologin.sh"
+spawn-at-startup "awww-daemon"
+spawn-at-startup "hypridle"
+// clipboard history for the Quickshell clipboard (Mod+V)
+spawn-sh-at-startup "wl-paste --type text --watch cliphist store"
+spawn-sh-at-startup "wl-paste --type image --watch cliphist store"
+spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+
+
+// ─── Lid ─────────────────────────────────────────────────────────────────────
+// Closing the lid suspends via logind (HandleLidSwitch=suspend, the default);
+// hypridle locks the session first (Quickshell lock screen). On open, wake the screen right away.
+
+switch-events {
+    lid-open { spawn "niri" "msg" "action" "power-on-monitors"; }
+}
+
+// ─── Binds ───────────────────────────────────────────────────────────────────
+// Mod+Slash shows them all (Quickshell keybinds cheat sheet)
+
+binds {
+    // Media
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "~/.config/niri/scripts/volume.sh up"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "~/.config/niri/scripts/volume.sh down"; }
+    XF86AudioMute        allow-when-locked=true { spawn-sh "~/.config/niri/scripts/volume.sh mute"; }
+    XF86AudioPlay        allow-when-locked=true { spawn "playerctl" "play-pause"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn-sh "~/.config/niri/scripts/mic-toggle.sh"; }
+    Pause                allow-when-locked=true { spawn-sh "~/.config/niri/scripts/mic-toggle.sh"; }
+    XF86MonBrightnessUp   allow-when-locked=true { spawn-sh "~/.config/niri/scripts/brightness.sh up"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn-sh "~/.config/niri/scripts/brightness.sh down"; }
+
+    // Quickshell
+    Mod+Slash     hotkey-overlay-title="Горячие клавиши"        { spawn "qs" "ipc" "call" "widgets" "toggle" "minflair_keybinds"; }
+    Mod+Period     hotkey-overlay-title="Горячие клавиши"        { spawn "qs" "ipc" "call" "widgets" "toggle" "minflair_keybinds"; }  // ru layout (auto)
+    Alt+Space         hotkey-overlay-title="Запуск приложений"        { spawn "qs" "ipc" "call" "widgets" "toggle" "launcher"; }
+    Mod+V         hotkey-overlay-title="Буфер обмена"       { spawn "qs" "ipc" "call" "widgets" "toggle" "clipboard"; }
+    Ctrl+Alt+N         hotkey-overlay-title="Уведомления"   { spawn "qs" "ipc" "call" "widgets" "toggle" "notificationsCenter"; }
+    Ctrl+Alt+O         hotkey-overlay-title="Заметки"           { spawn "qs" "ipc" "call" "widgets" "toggle" "notes"; }
+    Ctrl+Alt+W   hotkey-overlay-title="Обои"       { spawn "qs" "ipc" "call" "widgets" "toggle" "wallpaper"; }
+    Mod+Shift+Q   hotkey-overlay-title="Меню питания"      { spawn "qs" "ipc" "call" "widgets" "toggle" "powerMenu"; }
+    Mod+Comma     hotkey-overlay-title="Настройки"        { spawn "qs" "ipc" "call" "widgets" "toggle" "minflair_settings"; }
+    Ctrl+Alt+S    hotkey-overlay-title="Центр управления"  { spawn "qs" "ipc" "call" "widgets" "toggle" "controlCenter"; }
+    Ctrl+Alt+A    hotkey-overlay-title="Панель"       { spawn "qs" "ipc" "call" "widgets" "toggle" "dashboard"; }
+    Ctrl+Alt+M    hotkey-overlay-title="Музыка"           { spawn "qs" "ipc" "call" "widgets" "toggle" "music"; }
+    Ctrl+Alt+P    hotkey-overlay-title="Менеджер пакетов" { spawn "qs" "ipc" "call" "widgets" "toggle" "packagemanager"; }
+    Ctrl+Alt+V    hotkey-overlay-title="VPN"              { spawn "qs" "ipc" "call" "widgets" "toggle" "vpn"; }
+    Print         hotkey-overlay-title="Снимок экрана"  { spawn "qs" "ipc" "call" "widgets" "toggle" "screenshot"; }
+
+    // System
+    // Mod+Shift+Slash                                     { show-hotkey-overlay; }
+    Mod+Tab       repeat=false hotkey-overlay-title="Обзор" { toggle-overview; }
+    Mod+Q         hotkey-overlay-title="Закрыть окно"    { close-window; }
+    // Mod+Ctrl+V    hotkey-overlay-title="Микшер громкости"    { spawn "pavucontrol"; }
+    Mod+Shift+T   hotkey-overlay-title="Распознать текст (normcap)"   { spawn "normcap" "-l" "eng" "rus"; }
+    Mod+I         hotkey-overlay-title="Заблокировать"            { spawn "qs" "ipc" "call" "lockScreen" "lock"; }
+    Mod+Shift+I   hotkey-overlay-title="Сон"         { spawn-sh "qs ipc call lockScreen lock && sleep 1 && systemctl suspend"; }
+    Mod+Escape    allow-inhibiting=false                 { toggle-keyboard-shortcuts-inhibit; }
+
+    // Screenshots
+    // Mod+Shift+S { screenshot; }
+    // Ctrl+Print  { screenshot-screen; }
+    // Alt+Print   { screenshot-window; }
+
+    // Apps
+    Mod+Return hotkey-overlay-title="Терминал"     { spawn "ghostty"; }
+    Mod+E      hotkey-overlay-title="Файловый менеджер" { spawn "loaf"; }
+    Mod+M      hotkey-overlay-title="Telegram"     { spawn "Telegram"; }
+    Mod+D      hotkey-overlay-title="Discord"      { spawn "vesktop"; }
+    Mod+B      hotkey-overlay-title="Zen"          { spawn "zen-browser"; }
+    Mod+S hotkey-overlay-title="Spotify (через запуск)" { spawn "spotify-launcher"; }
+    Mod+G hotkey-overlay-title="Steam" { spawn "/usr/bin/steam"; }
+
+    // Focus (vim keys and arrows)
+    // Mod+H { focus-column-left; }
+    // Mod+L { focus-column-right; }
+    // Mod+J { focus-window-or-workspace-down; }
+    // Mod+K { focus-window-or-workspace-up; }
+    Mod+Left  { focus-column-left; }
+    Mod+Right { focus-column-right; }
+    Mod+Down  { focus-window-or-workspace-down; }
+    Mod+Up    { focus-window-or-workspace-up; }
+
+    // Move
+    Mod+Shift+H { move-column-left; }
+    Mod+Shift+L { move-column-right; }
+    Mod+Shift+J { move-window-down-or-to-workspace-down; }
+    Mod+Shift+K { move-window-up-or-to-workspace-up; }
+    Mod+Ctrl+Left  { move-column-left; }
+    Mod+Ctrl+Right { move-column-right; }
+    Mod+Ctrl+Down  { move-window-down-or-to-workspace-down; }
+    Mod+Ctrl+Up    { move-window-up-or-to-workspace-up; }
+
+    // Monitors
+    // Mod+Ctrl+H       { focus-monitor-left; }
+    // Mod+Ctrl+L       { focus-monitor-right; }
+    // Mod+Shift+Ctrl+H { move-column-to-monitor-left; }
+    // Mod+Shift+Ctrl+L { move-column-to-monitor-right; }
+
+    // Mouse wheel
+    Mod+WheelScrollDown      cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp        cooldown-ms=150 { focus-workspace-up; }
+    Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-window-to-workspace-down; }
+    Mod+Ctrl+WheelScrollUp   cooldown-ms=150 { move-window-to-workspace-up; }
+    Mod+Shift+WheelScrollDown      { move-column-right; }
+    Mod+Shift+WheelScrollUp        { move-column-left; }
+    // Mod+Shift+Ctrl+WheelScrollDown { move-window-down-or-to-workspace-down; }
+    // Mod+Shift+Ctrl+WheelScrollUp   { move-window-up-or-to-workspace-up; }
+
+    // Workspaces
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+
+    Mod+Ctrl+1 { move-column-to-workspace 1; }
+    Mod+Ctrl+2 { move-column-to-workspace 2; }
+    Mod+Ctrl+3 { move-column-to-workspace 3; }
+    Mod+Ctrl+4 { move-column-to-workspace 4; }
+    Mod+Ctrl+5 { move-column-to-workspace 5; }
+    Mod+Ctrl+6 { move-column-to-workspace 6; }
+    Mod+Ctrl+7 { move-column-to-workspace 7; }
+    Mod+Ctrl+8 { move-column-to-workspace 8; }
+    Mod+Ctrl+9 { move-column-to-workspace 9; }
+
+    // Columns and tabs
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+    Mod+X            { toggle-column-tabbed-display; }
+
+    // Window size and mode
+    Mod+F           { maximize-column; }
+    Mod+Shift+F     { fullscreen-window; }
+    Mod+Ctrl+F      { expand-column-to-available-width; }
+    Mod+C     { center-column; }
+    Mod+Alt+R       { reset-window-height; }
+    Mod+Ctrl+Minus       { set-column-width "-10%"; }
+    Mod+Ctrl+Equal       { set-column-width "+10%"; }
+    Mod+Shift+Minus       { set-window-height "-10%"; }
+    Mod+Shift+Equal       { set-window-height "+10%"; }
+    Mod+Space       { switch-layout "next"; }
+    Mod+T           { toggle-window-floating; }
+    // Mod+Shift+Space { switch-focus-between-floating-and-tiling; }
+
+    // Custom
+}
+
+// Generated by Quickshell: colors from the wallpaper, Settings app choices, cursor theme
+include optional=true "colors.kdl"
+include optional=true "minflair.kdl"
+include optional=true "cursor.kdl"

@@ -1,0 +1,2 @@
+#!/bin/sh
+exec python3 "${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/Modules/Music/scripts/lyse_bridge.py" "$@"

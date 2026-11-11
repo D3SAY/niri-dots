@@ -1,0 +1,28 @@
+# Domains zapret2 works on; subdomains are included automatically
+
+# Discord
+discord.com
+discord.gg
+discordapp.com
+discordapp.net
+discord.media
+discordcdn.com
+discord.dev
+discordstatus.com
+dis.gd
+
+# YouTube
+youtube.com
+youtu.be
+youtube-nocookie.com
+googlevideo.com
+ytimg.com
+ggpht.com
+youtubei.googleapis.com
+youtube.googleapis.com
+
+# SoundCloud (site, player API and audio/image CDN)
+soundcloud.com
+soundcloud.cloud
+sndcdn.com
+snd.sc

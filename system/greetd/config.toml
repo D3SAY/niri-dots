@@ -1,0 +1,8 @@
+# Login screen: greetd starts a bare niri with the minflair-style Quickshell greeter on tty1.
+# After the password the greeter launches niri-session for the user.
+[terminal]
+vt = 1
+
+[default_session]
+command = "niri -c /etc/greetd/niri-greeter.kdl"
+user = "greeter"

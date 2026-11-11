@@ -1,0 +1,44 @@
+// niri for the login screen only (greetd runs it as the "greeter" user, see config.toml).
+// It shows the Quickshell greeter and quits once the greeter starts the real session.
+
+output "DP-2" {
+    mode "2560x1440@143.999"
+    position x=0 y=0
+}
+
+input {
+    keyboard {
+        xkb {
+            layout "us,ru"
+        }
+        repeat-delay 300
+        repeat-rate 50
+    }
+}
+
+cursor {
+    xcursor-theme "Bibata-Modern-Classic"
+    xcursor-size 20
+}
+
+environment {
+    QT_QPA_PLATFORM "wayland"
+}
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+prefer-no-csd
+
+animations {
+    off
+}
+
+// The greeter quits niri when it's done; if it crashes, niri quits too and greetd starts over.
+// The greeter user has no home of its own, so its caches go to /tmp.
+spawn-sh-at-startup "d=/tmp/minflair-greeter-$(id -u); mkdir -p $d && export XDG_CACHE_HOME=$d/cache XDG_STATE_HOME=$d/state; qs -p ${GREETER_DIR:-/etc/greetd/minflair-greeter}; niri msg action quit --skip-confirmation"
+
+binds {
+    Mod+Space { switch-layout "next"; }
+}

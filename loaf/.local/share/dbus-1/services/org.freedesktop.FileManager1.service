@@ -1,0 +1,5 @@
+# "Show in folder" from other apps (browsers, Telegram...) starts Loaf instead of Nautilus. Nautilus
+# stays installed: xdg-desktop-portal-gnome needs it for the open/save dialogs.
+[D-BUS Service]
+Name=org.freedesktop.FileManager1
+Exec=/usr/bin/loaf

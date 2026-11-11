@@ -1,0 +1,14 @@
+# Local MTProto proxy for Telegram (AUR: tg-ws-proxy-cli), listens on 127.0.0.1:1443
+# The secret lives outside the repo in ~/.config/tg-ws-proxy/env as TG_WS_SECRET=<32 hex chars>
+[Unit]
+Description=Telegram WebSocket bridge proxy
+After=network-online.target
+
+[Service]
+EnvironmentFile=%h/.config/tg-ws-proxy/env
+ExecStart=/usr/bin/tg-ws-proxy --host 127.0.0.1 --port 1443 --secret ${TG_WS_SECRET}
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target
