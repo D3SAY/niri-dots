@@ -26,31 +26,27 @@
 
 ## Быстрый старт
 
-Нужны рабочая Arch-совместимая система с Wayland, пользовательская сессия systemd и PipeWire. Установи пакеты из репозиториев дистрибутива:
+Нужна Arch-совместимая система с пользовательской сессией systemd и PipeWire. Если Git ещё не установлен, выполни `sudo pacman -S --needed git`. Клонируй репозиторий в постоянную папку и запусти установщик от своего пользователя.
 
 ```bash
-sudo pacman -S --needed git stow niri quickshell xwayland-satellite \
-  qt6-5compat qt6-declarative qt6-imageformats qt6ct qt5ct \
-  python-pam python-pillow python-gobject jq libnotify \
-  awww hypridle polkit-gnome gnome-keyring \
-  xdg-desktop-portal-gnome xdg-desktop-portal-gtk \
-  ghostty playerctl pamixer pavucontrol upower cava wlsunset brightnessctl \
-  cliphist wl-clipboard grim slurp imagemagick ffmpeg wf-recorder pacman-contrib \
-  papirus-icon-theme noto-fonts noto-fonts-emoji
+git clone https://github.com/D3SAY/niri-dots.git ~/niri-dots
+cd ~/niri-dots
+./install.sh
 ```
 
-Скачай или клонируй этот репозиторий в постоянную папку и открой её в терминале. Если у тебя уже есть свои конфиги niri, Quickshell или Ghostty, сохрани их в резервную копию. Stow останавливается при конфликте файлов.
+Установщик запрашивает `sudo` для недостающих пакетов. Затем он подключает конфиги niri, Minflair, hypridle, Ghostty и Fastfetch через GNU Stow и проверяет их командой `niri validate`. При конфликте Stow показывает занятые пути. Сохрани эти файлы в резервную копию, убери их с указанных путей и запусти установщик снова.
 
-```bash
-stow --target="$HOME" --no-folding --simulate --verbose niri quickshell hypr ghostty
-stow --target="$HOME" --no-folding niri quickshell hypr ghostty
-niri validate
-mkdir -p ~/Pictures/Wallpapers
-```
+| Опция | Действие |
+|---|---|
+| `--dry-run` | Показывает недостающие пакеты и проверяет конфликты, если установлен GNU Stow. |
+| `--configs-only` | Подключает конфиги при уже установленных зависимостях. |
+| `--gtk-theme` | Подключает тему Material-Gnome. |
+| `--lyse` | Подключает обёртку Lyse. Сам Lyse устанавливается отдельно. |
+| `--uninstall` | Удаляет ссылки установщика. Пакеты и пользовательские данные остаются. |
 
 Выбери **niri** в своём дисплейном менеджере или запусти `niri-session` из TTY. Первый запуск работает и без сгенерированных настроек темы. Положи свои изображения в `~/Pictures/Wallpapers` и выбери обои через **Ctrl+Alt+W**. При необходимости настрой общее оформление через **Super+,**.
 
-Отключить конфиги можно из той же папки командой `stow --target="$HOME" --no-folding -D niri quickshell hypr ghostty`. Пользовательские настройки, созданные самим Minflair, сохраняются отдельно.
+Чтобы отключить конфиги, запусти `./install.sh --uninstall` из той же папки. Если подключал тему или обёртку Lyse, добавь к команде соответствующие опции.
 
 ## Возможности и горячие клавиши
 
