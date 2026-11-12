@@ -20,6 +20,9 @@ Item {
     property alias initialFocusItem: searchField
     property int maxVisibleItems: 8
     readonly property bool isSearching: searchField.text.trim() !== ""
+    readonly property var calculation: calculate(searchField.text)
+    property bool resultCopied: false
+    onCalculationChanged: resultCopied = false
     readonly property int currentResultsCount: root.filteredApps ? root.filteredApps.length : 0
     readonly property int targetVisibleItems: {
         if (!isSearching)
@@ -49,6 +52,9 @@ Item {
         return 0;
     }
     readonly property int visibleListHeight: {
+        if (calculation)
+            return itemHeight + layoutSpacing;
+
         if (!isSearching)
             return maxListHeight + Math.min(expandedExtraHeight, 200);
 
@@ -58,6 +64,80 @@ Item {
         let needed = baseListHeight + expandedExtraHeight;
         let maxAllowed = maxListHeight + Math.min(expandedExtraHeight, 200);
         return Math.min(needed, maxAllowed);
+    }
+
+    function calculate(query) {
+        const input = query.trim();
+        const explicit = input.startsWith("=");
+        const expression = (explicit ? input.slice(1) : input)
+            .replace(/,/g, ".").replace(/[×хХ]/g, "*").replace(/÷/g, "/").replace(/−/g, "-").trim();
+        if (!explicit && (!/^[\d\s.+*/%^()-]+$/.test(expression) || !/\d/.test(expression)
+                || !/[+*/%^()-]/.test(expression)))
+            return null;
+        if (!expression)
+            return { error: "Введи выражение" };
+        if (expression.length > 256)
+            return { error: "Выражение слишком длинное" };
+
+        const tokens = expression.match(/(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|\S/g);
+        const precedence = { "+": 1, "-": 1, "*": 2, "/": 2, "%": 2, "^": 3 };
+        let index = 0;
+
+        function parse(minimum) {
+            const token = tokens[index++];
+            let value;
+            if (token === "(") {
+                value = parse(1);
+                if (tokens[index++] !== ")")
+                    throw new Error("Не хватает закрывающей скобки");
+            } else if (token === "+" || token === "-") {
+                value = (token === "-" ? -1 : 1) * parse(3);
+            } else if (token && /^\.?\d/.test(token)) {
+                value = Number(token);
+            } else {
+                throw new Error("Проверь выражение");
+            }
+
+            while (index < tokens.length) {
+                const operator = tokens[index];
+                const level = precedence[operator];
+                if (!level || level < minimum)
+                    break;
+                index++;
+                const right = parse(operator === "^" ? level : level + 1);
+                switch (operator) {
+                case "+": value += right; break;
+                case "-": value -= right; break;
+                case "*": value *= right; break;
+                case "/":
+                case "%":
+                    if (right === 0)
+                        throw new Error("Деление на ноль");
+                    value = operator === "/" ? value / right : value % right;
+                    break;
+                case "^": value = Math.pow(value, right); break;
+                }
+            }
+            return value;
+        }
+
+        try {
+            const value = parse(1);
+            if (index !== tokens.length)
+                throw new Error("Проверь выражение");
+            if (!Number.isFinite(value))
+                throw new Error("Результат вне допустимого диапазона");
+            return { value: String(Number(value.toPrecision(15))) };
+        } catch (error) {
+            return explicit ? { error: error.message } : null;
+        }
+    }
+
+    function copyResult() {
+        if (calculation && calculation.value !== undefined && !copyProcess.running) {
+            copyProcess.command = ["wl-copy", "--", calculation.value];
+            copyProcess.running = true;
+        }
     }
 
     function filterApps(query) {
@@ -80,6 +160,13 @@ Item {
     }
 
     function handleKeyPress(event, fromSearch) {
+        if (calculation && event.key !== Qt.Key_Escape) {
+            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                copyResult();
+                event.accepted = true;
+            }
+            return;
+        }
         let currentDelegate = appsView.currentItem;
         if (event.key === Qt.Key_Down) {
             if (currentDelegate && currentDelegate.isExpanded && currentDelegate.currentActionIndex < currentDelegate.actionCount - 1) {
@@ -217,7 +304,7 @@ Item {
             GhostEmptyState {
                 anchors.centerIn: parent
                 visible: opacity > 0.001
-                opacity: (root.filteredApps.length === 0 && root.isSearching) ? 1 : 0
+                opacity: (!root.calculation && root.filteredApps.length === 0 && root.isSearching) ? 1 : 0
                 text: "Приложения не найдены"
                 isAnimating: visible
 
@@ -229,6 +316,50 @@ Item {
 
                 }
 
+            }
+
+            Rectangle {
+                id: resultRow
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                height: root.itemHeight
+                visible: root.calculation !== null
+                color: Theme.bgSecondary
+                radius: Constants.sizeLg
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: Constants.sizeSm
+                    anchors.rightMargin: Constants.sizeSm
+                    spacing: Constants.sizeSm
+
+                    ThemedText {
+                        text: "="
+                        color: Theme.accent
+                        font.bold: true
+                    }
+
+                    ThemedText {
+                        Layout.fillWidth: true
+                        text: root.calculation ? (root.calculation.error || root.calculation.value) : ""
+                        color: root.calculation && root.calculation.error ? Theme.muted : Theme.fg
+                        elide: Text.ElideRight
+                    }
+
+                    ThemedText {
+                        visible: root.calculation !== null && !root.calculation.error
+                        text: root.resultCopied ? "Скопировано" : "Enter — копировать"
+                        color: Theme.muted
+                        customSize: 11
+                    }
+                }
+
+                TapHandler {
+                    enabled: root.calculation !== null && !root.calculation.error
+                    onTapped: root.copyResult()
+                }
             }
 
             ListView {
@@ -252,7 +383,7 @@ Item {
                 highlightResizeDuration: 0
                 highlightMoveDuration: Constants.animFast
                 highlightFollowsCurrentItem: true
-                visible: root.filteredApps.length > 0
+                visible: !root.calculation && root.filteredApps.length > 0
                 Keys.onPressed: function(event) {
                     root.handleKeyPress(event, false);
                 }
@@ -334,7 +465,7 @@ Item {
         parent: SettingsService.barConvexMode ? bottomSearchContainer : topSearchContainer
         anchors.fill: parent
         preferredHeight: Constants.size4Xl
-        placeholderText: "Поиск приложений…"
+        placeholderText: "Поиск приложений или выражение…"
         onSearchRequested: (text) => {
             return root.filterApps(text);
         }
@@ -346,6 +477,15 @@ Item {
 
     Process {
         id: appLauncher
+    }
+
+    Process {
+        id: copyProcess
+
+        onExited: code => {
+            if (code === 0 && root.calculation && command[2] === root.calculation.value)
+                root.resultCopied = true;
+        }
     }
 
 }
