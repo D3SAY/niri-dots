@@ -251,10 +251,10 @@ Item {
             Layout.preferredHeight: root.cardItemHeight
 
             GhostEmptyState {
+                width: Math.min(implicitWidth, Math.max(0, parent.width - 2 * Constants.sizeSm))
                 anchors.centerIn: parent
                 visible: filteredModel.count === 0 && !loadWallpapersProc.running
-                text: searchField.text === "" ? "Нет обоев в ~/Pictures/Wallpapers" : "Обои не найдены"
-                isAnimating: visible
+                text: searchField.text === "" ? "Добавь изображения в ~/Pictures/Wallpapers." : "Совпадений нет. Попробуй другое название."
             }
 
             ListView {

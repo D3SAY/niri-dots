@@ -81,9 +81,9 @@ ColumnLayout {
             visible: currentBinds.length === 0
 
             GhostEmptyState {
+                width: Math.min(implicitWidth, Math.max(0, parent.width - 2 * Constants.sizeSm))
                 anchors.centerIn: parent
                 text: "Сочетания не загружены"
-                isAnimating: currentBinds.length === 0
             }
 
         }

@@ -44,12 +44,12 @@ ColumnLayout {
                 Layout.fillHeight: true
 
                 GhostEmptyState {
+                    width: Math.min(implicitWidth, Math.max(0, parent.width - 2 * Constants.sizeSm))
                     anchors.centerIn: parent
                     visible: managerRoot.resultsModel.count === 0 && !managerRoot.isSearching && !managerRoot.isDebounceTimerRunning() && !(managerRoot.actionMode === "install" && managerRoot.searchText.length < 2)
                     icon: managerRoot.actionMode === "update" ? "check" : "ghost"
                     iconColor: managerRoot.actionMode === "update" ? Theme.accent : Theme.muted
                     text: managerRoot.actionMode === "update" ? "Система обновлена" : "Пакеты не найдены"
-                    isAnimating: visible && managerRoot.actionMode !== "update"
                 }
 
                 ColumnLayout {

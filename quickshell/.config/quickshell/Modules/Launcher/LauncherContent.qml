@@ -302,11 +302,11 @@ Item {
             clip: true
 
             GhostEmptyState {
+                width: Math.min(implicitWidth, Math.max(0, parent.width - 2 * Constants.sizeSm))
                 anchors.centerIn: parent
                 visible: opacity > 0.001
                 opacity: (!root.calculation && root.filteredApps.length === 0 && root.isSearching) ? 1 : 0
-                text: "Приложения не найдены"
-                isAnimating: visible
+                text: "Приложения не найдены. Попробуй другое название."
 
                 Behavior on opacity {
                     NumberAnimation {

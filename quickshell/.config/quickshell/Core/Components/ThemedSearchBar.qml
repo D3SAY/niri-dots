@@ -10,6 +10,7 @@ FocusScope {
     property int customSize: Constants.sizeSm
     property alias text: searchInput.text
     property string placeholderText: "Поиск…"
+    property string accessibleName: placeholderText
     property int preferredHeight: Constants.size4Xl
     property bool showClearButton: true
     property bool autoFocus: true
@@ -30,6 +31,8 @@ FocusScope {
         anchors.fill: parent
         color: root.backgroundColor
         radius: root.backgroundRadius
+        border.width: searchInput.activeFocus || clearButton.activeFocus ? 1 : 0
+        border.color: Theme.accent
 
         Behavior on color {
             ColorAnimation {
@@ -57,6 +60,7 @@ FocusScope {
 
             focus: root.autoFocus
             Layout.fillWidth: true
+            Accessible.name: root.accessibleName
             placeholderText: root.placeholderText
             placeholderTextColor: Theme.muted
             font.family: Constants.fontFamily
@@ -72,13 +76,22 @@ FocusScope {
             id: clearButton
 
             visible: root.showClearButton && searchInput.text !== ""
+            Accessible.role: Accessible.Button
+            Accessible.name: "Очистить поиск"
+            Accessible.onPressAction: clearSearch()
+            activeFocusOnTab: true
+            Keys.onReturnPressed: clearSearch()
+            Keys.onEnterPressed: clearSearch()
+            Keys.onSpacePressed: clearSearch()
             icon: "x"
-            iconColor: Theme.muted
+            iconColor: activeFocus ? Theme.accent : Theme.muted
             iconSize: Constants.sizeMd
             flat: true
-            onClicked: {
-                searchInput.text = "";
+            onClicked: clearSearch()
+
+            function clearSearch() {
                 searchInput.forceActiveFocus();
+                searchInput.text = "";
             }
         }
 

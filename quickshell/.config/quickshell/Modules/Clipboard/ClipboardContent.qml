@@ -86,11 +86,11 @@ Item {
             clip: true
 
             GhostEmptyState {
+                width: Math.min(implicitWidth, Math.max(0, parent.width - 2 * Constants.sizeSm))
                 anchors.centerIn: parent
                 visible: opacity > 0.001
                 opacity: (ClipboardService.filteredModel.count === 0 && !ClipboardService.isDeleting && !root.isClearingAll) ? 1 : 0
-                text: searchField.text === "" ? "Буфер обмена пуст" : "Ничего не найдено"
-                isAnimating: visible
+                text: searchField.text === "" ? "Скопируй текст или изображение, чтобы оно появилось здесь." : "Совпадений нет. Попробуй другой запрос."
 
                 Behavior on opacity {
                     NumberAnimation {

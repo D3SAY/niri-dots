@@ -37,7 +37,7 @@ QtObject {
     property color bgAccent: Qt.rgba(accent.r, accent.g, accent.b, isDark ? 0.15 : 0.3)
     property color bgAccentComplementary: Qt.rgba(accentComplementary.r, accentComplementary.g, accentComplementary.b, isDark ? 0.15 : 0.3)
     property color fg: themes[0].dark.fg
-    property color muted: Qt.rgba(fg.r, fg.g, fg.b, 0.4)
+    property color muted: Qt.rgba(fg.r, fg.g, fg.b, isDark ? 0.64 : 0.72)
     property color border: isDark ? Qt.rgba(fg.r, fg.g, fg.b, 0.1) : Qt.rgba(fg.r, fg.g, fg.b, 0.2)
     property color accent: themes[0].dark.accent
     property color accentComplementary: themes[0].dark.accentComplementary
