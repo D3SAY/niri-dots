@@ -75,16 +75,7 @@ Item {
                         Layout.fillWidth: true
                         isVisible: root.quickSettingsOpen
                         expanded: root.activePageIndex === 1
-                        onMenuClicked: {
-                            if (isActive)
-                                root.activePageIndex = 1;
-
-                        }
-                        onIsActiveChanged: {
-                            if (!isActive && root.activePageIndex === 1)
-                                root.activePageIndex = 0;
-
-                        }
+                        onMenuClicked: root.activePageIndex = 1
                     }
 
                     BluetoothControl {
@@ -213,7 +204,7 @@ Item {
                 }
 
                 ThemedText {
-                    text: "Сети Wi-Fi"
+                    text: "Сеть"
                     customSize: Constants.sizeMd
                     font.bold: true
                     Layout.fillWidth: true

@@ -11,7 +11,11 @@ Rectangle {
     property string label: ""
     property string subtitle: ""
     property bool hasMenu: false
+    property bool menuWhileInactive: false
 
+    property bool hasContextMenu: false
+
+    signal contextRequested()
     signal clicked()
     signal menuClicked()
 
@@ -99,6 +103,7 @@ Rectangle {
 
                 ThemedText {
                     text: root.label
+                    textFormat: Text.PlainText
                     font.bold: true
                     customSize: Constants.sizeSm
                     color: Theme.fg
@@ -108,6 +113,7 @@ Rectangle {
 
                 ThemedText {
                     text: root.subtitle
+                    textFormat: Text.PlainText
                     color: Theme.muted
                     customSize: Constants.sizeXs + 2
                     elide: Text.ElideRight
@@ -124,7 +130,7 @@ Rectangle {
                 cursorShape: Qt.PointingHandCursor
                 hoverEnabled: true
                 onClicked: {
-                    if (root.hasMenu && root.isActive)
+                    if (root.hasMenu && (root.isActive || root.menuWhileInactive))
                         root.menuClicked();
                     else
                         root.clicked();
@@ -139,11 +145,17 @@ Rectangle {
         id: fullTileMouseArea
 
         anchors.fill: parent
-        visible: !root.isActive
-        enabled: !root.isActive
+        visible: !root.isActive && !root.menuWhileInactive
+        enabled: visible
         cursorShape: Qt.PointingHandCursor
         hoverEnabled: true
         onClicked: root.clicked()
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        enabled: root.hasContextMenu
+        onTapped: root.contextRequested()
     }
 
     Behavior on scale {

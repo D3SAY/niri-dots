@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import Quickshell
 import qs.Core
 import qs.Core.Components
 
@@ -16,7 +17,7 @@ QuickSettingsTile {
     property string connectedSsid: "Не подключено"
     property string currentSsid: {
         if (!isActive)
-            return "Выкл";
+            return "Wi-Fi выключен";
 
         return connectedSsid;
     }
@@ -25,7 +26,7 @@ QuickSettingsTile {
     function toggle() {
         wifiSetProc.command = ["python3", Quickshell.shellDir + "/Modules/ControlCenter/scripts/wifi.py", "toggle-radio"];
         wifiSetProc.running = true;
-        root.isActive = !root.isActive;
+
     }
 
     function scan(forceRescan) {
@@ -43,11 +44,160 @@ QuickSettingsTile {
         wifiConnectProc.running = true;
     }
 
+    readonly property var ethernetDevices: speed.connection.ethernet || []
+    property string ethernetError: ""
+
+    NetworkSpeed {
+        id: speed
+        monitoring: root.isVisible
+    }
+
+    hasContextMenu: true
+    activeFocusOnTab: true
+    Accessible.role: Accessible.Button
+    Accessible.name: label
+    Accessible.description: subtitle + ". Shift+F10 — действия сети"
+    Accessible.onPressAction: root.menuClicked()
+    border.width: activeFocus ? 1 : 0
+    border.color: Theme.accent
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Menu || (event.key === Qt.Key_F10 && event.modifiers === Qt.ShiftModifier)) {
+            root.contextRequested();
+        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+            root.menuClicked();
+        } else {
+            return;
+        }
+        event.accepted = true;
+    }
+    onContextRequested: {
+        if (networkMenu.opened)
+            networkMenu.close();
+        else
+            networkMenu.open();
+    }
+
     hasMenu: true
+    menuWhileInactive: true
     icon: root.isActive ? "wifi" : "wifi-off"
-    label: "Wi-Fi"
-    subtitle: root.currentSsid
-    onClicked: root.toggle()
+    label: speed.running ? speed.stage : speed.resultCurrent ? "Сеть · " + speed.latency : "Сеть"
+    subtitle: speed.running ? "Проверка скорости…" : ethernetError || speed.error
+        || speed.summary || speed.connection.name || root.currentSsid
+    onClicked: root.menuClicked()
+
+    Popup {
+        id: networkMenu
+
+        x: 0
+        y: root.height + 4
+        width: Math.max(root.width, 210)
+        height: (actions.implicitHeight + 2 * padding) * reveal
+        padding: Constants.sizeXs
+        clip: true
+        opacity: reveal
+        property real reveal: 0
+        property bool restoreFocus: false
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        onAboutToShow: restoreFocus = root.activeFocus
+        onOpened: wifiAction.forceActiveFocus()
+        onClosed: {
+            if (restoreFocus && root.isVisible)
+                root.forceActiveFocus();
+        }
+
+        enter: Transition {
+            NumberAnimation {
+                target: networkMenu
+                property: "reveal"
+                to: 1
+                duration: Constants.animNormal
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        exit: Transition {
+            NumberAnimation {
+                target: networkMenu
+                property: "reveal"
+                to: 0
+                duration: Constants.animFast
+                easing.type: Easing.InCubic
+            }
+        }
+
+        background: Rectangle {
+            color: Theme.bg
+            radius: Constants.sizeSm + networkMenu.padding
+            border.color: Theme.border
+        }
+
+        contentItem: Item {
+            ColumnLayout {
+                id: actions
+                width: parent.width
+                spacing: Constants.size2Xs
+
+                NetworkAction {
+                    id: wifiAction
+                    Layout.fillWidth: true
+                    actionIcon: root.isActive ? "wifi-off" : "wifi"
+                    text: root.isActive ? "Выключить Wi-Fi" : "Включить Wi-Fi"
+                    enabled: !wifiSetProc.running
+                    onClicked: {
+                        networkMenu.close();
+                        root.toggle();
+                    }
+                }
+
+                Repeater {
+                    model: root.ethernetDevices
+                    NetworkAction {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        actionIcon: "monitor"
+                        text: (modelData.active ? "Отключить Ethernet" : "Подключить Ethernet")
+                            + (root.ethernetDevices.length > 1 ? " · " + modelData.device : "")
+                        enabled: !ethernetProc.running
+                        onClicked: {
+                            networkMenu.close();
+                            root.ethernetError = "";
+                            ethernetProc.command = ["nmcli", "--wait", "12", "device",
+                                modelData.active ? "disconnect" : "connect", modelData.device];
+                            ethernetProc.running = true;
+                        }
+                    }
+                }
+
+                NetworkAction {
+                    Layout.fillWidth: true
+                    actionIcon: speed.running ? "x" : "refresh"
+                    text: speed.running ? "Отменить замер" : "Проверить скорость"
+                    onClicked: {
+                        networkMenu.close();
+                        root.ethernetError = "";
+                        speed.toggleTest();
+                    }
+                }
+            }
+        }
+
+    }
+
+    Process {
+        id: ethernetProc
+        onExited: code => {
+            if (code !== 0)
+                root.ethernetError = "Ошибка Ethernet";
+            speed.refreshConnection();
+        }
+    }
+    onIsVisibleChanged: {
+        if (!isVisible)
+            networkMenu.close();
+        if (isVisible && isActive && root.wifiList.length === 0)
+            scan(false);
+    }
     onExpandedChanged: {
         if (expanded)
             scan(true);
@@ -63,11 +213,6 @@ QuickSettingsTile {
             wifiList = [];
             connectedSsid = "Не подключено";
         }
-    }
-    onIsVisibleChanged: {
-        if (isVisible && isActive && root.wifiList.length === 0)
-            scan(false);
-
     }
     Component.onCompleted: {
         if (isActive && root.wifiList.length === 0)
